@@ -1,0 +1,17 @@
+services:
+  web:
+    build: app
+    ports:
+      - 80:80
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=.;Database=todo_db;User ID=sa;Password=Th3SunAls0R1s3s!;MultipleActiveResultSets=true;
+  db:
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: Th3SunAls0R1s3s!
+    image: mcr.microsoft.com/azure-sql-edge:latest
+    restart: always
+    ports:
+      - 1433:1433
