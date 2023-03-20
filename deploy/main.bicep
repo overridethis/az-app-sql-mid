@@ -67,6 +67,17 @@ resource site 'Microsoft.Web/sites@2022-03-01' = {
 }
 
 
+resource sourceControl 'Microsoft.Web/sites/sourcecontrols@2022-03-01' = {
+  name: 'web'
+  parent: site
+  properties: {
+    repoUrl: 'https://github.com/overridethis/az-app-sql-managed-identity.git'
+    branch: 'main'
+    isManualIntegration: false
+  }
+}
+
+
 resource dbServer 'Microsoft.Sql/servers@2022-05-01-preview' ={
   name: 'sqlsrv-${uniqueKey}'
   location: location

@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.15.31.15270",
-      "templateHash": "876544972299488863"
+      "templateHash": "5105550932737569095"
     }
   },
   "parameters": {
@@ -98,6 +98,19 @@
         "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('user-{0}', variables('uniqueKey')))]",
         "[resourceId('Microsoft.Insights/components', format('ai-{0}', variables('uniqueKey')))]",
         "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', variables('uniqueKey')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/sourcecontrols",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}/{1}', format('app-{0}', variables('uniqueKey')), 'web')]",
+      "properties": {
+        "repoUrl": "https://github.com/overridethis/az-app-sql-managed-identity.git",
+        "branch": "main",
+        "isManualIntegration": false
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', format('app-{0}', variables('uniqueKey')))]"
       ]
     },
     {
