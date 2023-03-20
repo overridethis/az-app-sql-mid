@@ -71,7 +71,7 @@ resource sourceControl 'Microsoft.Web/sites/sourcecontrols@2022-03-01' = {
   name: 'web'
   parent: site
   properties: {
-    repoUrl: 'https://github.com/overridethis/az-app-sql-managed-identity.git'
+    repoUrl: 'https://github.com/rjhernandez/az-app-sql-managed-identity.git'
     branch: 'main'
     isManualIntegration: false
   }
