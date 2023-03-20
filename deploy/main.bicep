@@ -43,17 +43,24 @@ resource site 'Microsoft.Web/sites@2022-03-01' = {
   name: 'app-${uniqueKey}'
   location: location
   tags: tags
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      '${identity.id}': {}
+    }
+  }
   properties: {
     serverFarmId: serverfarm.id
     siteConfig: {
       appSettings: [
         { name: 'APPINSIGHTS_INSTRUMENTATIONKEY', value: insights.properties.InstrumentationKey }
+        { name: 'Db__RunMigrations', value: 'true' }
       ]
       connectionStrings: [
         { 
           name: 'DefaultConnection'
           type: 'SQLAzure'
-          connectionString: 'Server=tcp:server.${environment().suffixes.sqlServerHostname},1433;Initial Catalog=database;Persist Security Info=False;User ID=user;Password=password;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;'}
+          connectionString: 'Server=tcp:${serverfarm.name}.${environment().suffixes.sqlServerHostname},1433;Database=${database.name};Authentication=Active Directory Default;'}
       ]
     }
   }
@@ -88,3 +95,7 @@ resource database 'Microsoft.Sql/servers/databases@2022-05-01-preview' = {
   }
 }
 
+output identityId string = identity.id
+output identityClientId string = identity.properties.clientId
+output identityPrincipalId string = identity.properties.principalId 
+output identityTenantId string = identity.properties.tenantId

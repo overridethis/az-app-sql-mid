@@ -1,0 +1,157 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.15.31.15270",
+      "templateHash": "876544972299488863"
+    }
+  },
+  "parameters": {
+    "suffix": {
+      "type": "string",
+      "metadata": {
+        "description": "The suffix to be used for naming of resources in this deployment."
+      }
+    }
+  },
+  "variables": {
+    "location": "[resourceGroup().location]",
+    "tags": {
+      "env": "[parameters('suffix')]"
+    },
+    "uniqueKey": "[uniqueString(subscription().subscriptionId, parameters('suffix'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2023-01-31",
+      "name": "[format('user-{0}', variables('uniqueKey'))]",
+      "location": "[variables('location')]",
+      "tags": "[variables('tags')]"
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02",
+      "name": "[format('ai-{0}', variables('uniqueKey'))]",
+      "location": "[variables('location')]",
+      "tags": "[variables('tags')]",
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web",
+        "RetentionInDays": 90,
+        "publicNetworkAccessForIngestion": "Enabled",
+        "publicNetworkAccessForQuery": "Enabled"
+      }
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2022-03-01",
+      "name": "[format('plan-{0}', variables('uniqueKey'))]",
+      "location": "[variables('location')]",
+      "tags": "[variables('tags')]",
+      "sku": {
+        "name": "P2v2"
+      },
+      "kind": "linux",
+      "properties": {
+        "reserved": true
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2022-03-01",
+      "name": "[format('app-{0}', variables('uniqueKey'))]",
+      "location": "[variables('location')]",
+      "tags": "[variables('tags')]",
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('user-{0}', variables('uniqueKey'))))]": {}
+        }
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', variables('uniqueKey')))]",
+        "siteConfig": {
+          "appSettings": [
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId('Microsoft.Insights/components', format('ai-{0}', variables('uniqueKey'))), '2020-02-02').InstrumentationKey]"
+            },
+            {
+              "name": "Db__RunMigrations",
+              "value": "true"
+            }
+          ],
+          "connectionStrings": [
+            {
+              "name": "DefaultConnection",
+              "type": "SQLAzure",
+              "connectionString": "[format('Server=tcp:{0}.{1},1433;Database={2};Authentication=Active Directory Default;', format('plan-{0}', variables('uniqueKey')), environment().suffixes.sqlServerHostname, format('sqldb-{0}}}', variables('uniqueKey')))]"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers/databases', format('sqlsrv-{0}', variables('uniqueKey')), format('sqldb-{0}}}', variables('uniqueKey')))]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('user-{0}', variables('uniqueKey')))]",
+        "[resourceId('Microsoft.Insights/components', format('ai-{0}', variables('uniqueKey')))]",
+        "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', variables('uniqueKey')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2022-05-01-preview",
+      "name": "[format('sqlsrv-{0}', variables('uniqueKey'))]",
+      "location": "[variables('location')]",
+      "tags": "[variables('tags')]",
+      "properties": {
+        "administrators": {
+          "azureADOnlyAuthentication": true,
+          "login": "[format('user-{0}', variables('uniqueKey'))]",
+          "administratorType": "ActiveDirectory",
+          "principalType": "Application",
+          "sid": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('user-{0}', variables('uniqueKey'))), '2023-01-31').clientId]",
+          "tenantId": "[tenant().tenantId]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('user-{0}', variables('uniqueKey')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Sql/servers/databases",
+      "apiVersion": "2022-05-01-preview",
+      "name": "[format('{0}/{1}', format('sqlsrv-{0}', variables('uniqueKey')), format('sqldb-{0}}}', variables('uniqueKey')))]",
+      "location": "[variables('location')]",
+      "properties": {
+        "collation": "SQL_Latin1_General_CP1_CI_AS",
+        "catalogCollation": "SQL_Latin1_General_CP1_CI_AS",
+        "maxSizeBytes": 10737418240,
+        "licenseType": "LicenseIncluded"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', format('sqlsrv-{0}', variables('uniqueKey')))]"
+      ]
+    }
+  ],
+  "outputs": {
+    "identityId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('user-{0}', variables('uniqueKey')))]"
+    },
+    "identityClientId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('user-{0}', variables('uniqueKey'))), '2023-01-31').clientId]"
+    },
+    "identityPrincipalId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('user-{0}', variables('uniqueKey'))), '2023-01-31').principalId]"
+    },
+    "identityTenantId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('user-{0}', variables('uniqueKey'))), '2023-01-31').tenantId]"
+    }
+  }
+}
