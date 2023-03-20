@@ -1,6 +1,7 @@
 @description('The suffix to be used for naming of resources in this deployment.')
 param suffix string
 
+var linuxFxVersion = 'dotnetcore|7.0'
 var location = resourceGroup().location
 var tags = {
   env: suffix
@@ -52,6 +53,7 @@ resource site 'Microsoft.Web/sites@2022-03-01' = {
   properties: {
     serverFarmId: serverfarm.id
     siteConfig: {
+      linuxFxVersion: linuxFxVersion
       appSettings: [
         { name: 'APPINSIGHTS_INSTRUMENTATIONKEY', value: insights.properties.InstrumentationKey }
         { name: 'Db__RunMigrations', value: 'true' }
