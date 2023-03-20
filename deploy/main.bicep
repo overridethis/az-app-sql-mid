@@ -60,7 +60,8 @@ resource site 'Microsoft.Web/sites@2022-03-01' = {
         { 
           name: 'DefaultConnection'
           type: 'SQLAzure'
-          connectionString: 'Server=tcp:${dbServer.name}.${environment().suffixes.sqlServerHostname},1433;Database=${database.name};Authentication=Active Directory Default;'}
+          connectionString: 'Server=tcp:${dbServer.name}${environment().suffixes.sqlServerHostname},1433;Database=${database.name};Authentication=Active Directory Default;'
+        }
       ]
     }
   }
@@ -96,7 +97,7 @@ resource dbServer 'Microsoft.Sql/servers@2022-05-01-preview' ={
 
 resource database 'Microsoft.Sql/servers/databases@2022-05-01-preview' = {
   parent: dbServer
-  name: 'sqldb-${uniqueKey}}'
+  name: 'sqldb-${uniqueKey}'
   location: location
   properties: {
     collation: 'SQL_Latin1_General_CP1_CI_AS'
