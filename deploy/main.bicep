@@ -60,7 +60,7 @@ resource site 'Microsoft.Web/sites@2022-03-01' = {
         { 
           name: 'DefaultConnection'
           type: 'SQLAzure'
-          connectionString: 'Server=tcp:${serverfarm.name}.${environment().suffixes.sqlServerHostname},1433;Database=${database.name};Authentication=Active Directory Default;'}
+          connectionString: 'Server=tcp:${dbServer.name}.${environment().suffixes.sqlServerHostname},1433;Database=${database.name};Authentication=Active Directory Default;'}
       ]
     }
   }
@@ -73,7 +73,7 @@ resource sourceControl 'Microsoft.Web/sites/sourcecontrols@2022-03-01' = {
   properties: {
     repoUrl: 'https://github.com/rjhernandez/az-app-sql-managed-identity.git'
     branch: 'main'
-    isManualIntegration: false
+    isManualIntegration: true
   }
 }
 
