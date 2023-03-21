@@ -54,6 +54,8 @@ resource site 'Microsoft.Web/sites@2022-03-01' = {
     serverFarmId: serverfarm.id
     siteConfig: {
       linuxFxVersion: linuxFxVersion
+      logsDirectorySizeLimit: 100
+      detailedErrorLoggingEnabled: true
       appSettings: [
         { name: 'APPINSIGHTS_INSTRUMENTATIONKEY', value: insights.properties.InstrumentationKey }
         { name: 'Db__RunMigrations', value: 'true' }
@@ -94,6 +96,15 @@ resource dbServer 'Microsoft.Sql/servers@2022-05-01-preview' ={
       sid: identity.properties.clientId
       tenantId: tenant().tenantId
     }
+  }
+}
+
+resource allowAllWindowsAzureIps 'Microsoft.Sql/servers/firewallRules@2022-05-01-preview' = {
+  name: 'AllowAllWindowsAzureIps' // don't change the name
+  parent: dbServer
+  properties: {
+    endIpAddress: '0.0.0.0'
+    startIpAddress: '0.0.0.0'
   }
 }
 
