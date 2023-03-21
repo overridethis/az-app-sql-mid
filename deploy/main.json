@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.15.31.15270",
-      "templateHash": "5105550932737569095"
+      "templateHash": "17214577838876526604"
     }
   },
   "parameters": {
@@ -17,6 +17,7 @@
     }
   },
   "variables": {
+    "linuxFxVersion": "dotnetcore|7.0",
     "location": "[resourceGroup().location]",
     "tags": {
       "env": "[parameters('suffix')]"
@@ -74,6 +75,9 @@
       "properties": {
         "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', variables('uniqueKey')))]",
         "siteConfig": {
+          "linuxFxVersion": "[variables('linuxFxVersion')]",
+          "logsDirectorySizeLimit": 100,
+          "detailedErrorLoggingEnabled": true,
           "appSettings": [
             {
               "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
@@ -88,13 +92,14 @@
             {
               "name": "DefaultConnection",
               "type": "SQLAzure",
-              "connectionString": "[format('Server=tcp:{0}.{1},1433;Database={2};Authentication=Active Directory Default;', format('plan-{0}', variables('uniqueKey')), environment().suffixes.sqlServerHostname, format('sqldb-{0}}}', variables('uniqueKey')))]"
+              "connectionString": "[format('Server=tcp:{0}{1},1433;Database={2};Authentication=Active Directory Default;', format('sqlsrv-{0}', variables('uniqueKey')), environment().suffixes.sqlServerHostname, format('sqldb-{0}', variables('uniqueKey')))]"
             }
           ]
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Sql/servers/databases', format('sqlsrv-{0}', variables('uniqueKey')), format('sqldb-{0}}}', variables('uniqueKey')))]",
+        "[resourceId('Microsoft.Sql/servers/databases', format('sqlsrv-{0}', variables('uniqueKey')), format('sqldb-{0}', variables('uniqueKey')))]",
+        "[resourceId('Microsoft.Sql/servers', format('sqlsrv-{0}', variables('uniqueKey')))]",
         "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('user-{0}', variables('uniqueKey')))]",
         "[resourceId('Microsoft.Insights/components', format('ai-{0}', variables('uniqueKey')))]",
         "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', variables('uniqueKey')))]"
@@ -105,9 +110,9 @@
       "apiVersion": "2022-03-01",
       "name": "[format('{0}/{1}', format('app-{0}', variables('uniqueKey')), 'web')]",
       "properties": {
-        "repoUrl": "https://github.com/overridethis/az-app-sql-managed-identity.git",
+        "repoUrl": "https://github.com/rjhernandez/az-app-sql-managed-identity.git",
         "branch": "main",
-        "isManualIntegration": false
+        "isManualIntegration": true
       },
       "dependsOn": [
         "[resourceId('Microsoft.Web/sites', format('app-{0}', variables('uniqueKey')))]"
@@ -134,9 +139,21 @@
       ]
     },
     {
+      "type": "Microsoft.Sql/servers/firewallRules",
+      "apiVersion": "2022-05-01-preview",
+      "name": "[format('{0}/{1}', format('sqlsrv-{0}', variables('uniqueKey')), 'AllowAllWindowsAzureIps')]",
+      "properties": {
+        "endIpAddress": "0.0.0.0",
+        "startIpAddress": "0.0.0.0"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', format('sqlsrv-{0}', variables('uniqueKey')))]"
+      ]
+    },
+    {
       "type": "Microsoft.Sql/servers/databases",
       "apiVersion": "2022-05-01-preview",
-      "name": "[format('{0}/{1}', format('sqlsrv-{0}', variables('uniqueKey')), format('sqldb-{0}}}', variables('uniqueKey')))]",
+      "name": "[format('{0}/{1}', format('sqlsrv-{0}', variables('uniqueKey')), format('sqldb-{0}', variables('uniqueKey')))]",
       "location": "[variables('location')]",
       "properties": {
         "collation": "SQL_Latin1_General_CP1_CI_AS",
