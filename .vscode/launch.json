@@ -24,7 +24,8 @@
             },
             "sourceFileMap": {
                 "/Views": "${workspaceFolder}/Views"
-            }
+            },
+            "envFile": "${workspaceFolder}/app/.env"
         },
         {
             "name": ".NET Core Attach",

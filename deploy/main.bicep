@@ -64,7 +64,7 @@ resource site 'Microsoft.Web/sites@2022-03-01' = {
         { 
           name: 'DefaultConnection'
           type: 'SQLAzure'
-          connectionString: 'Server=tcp:${dbServer.name}${environment().suffixes.sqlServerHostname},1433;Database=${database.name};Authentication=Active Directory Default;'
+          connectionString: 'Server=tcp:${dbServer.name}${environment().suffixes.sqlServerHostname},1433;Database=${database.name};Authentication=Active Directory Managed Identity;Encrypt=True;User Id=${identity.properties.clientId};'
         }
       ]
     }
