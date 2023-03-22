@@ -27,9 +27,12 @@
                         </li>
                     </ul>
                 </div>
-                <div class="navbar-brand">
-                    User: @(User.Identity?.Name ?? "Unauthenticated")
-                </div>
+                @if (User.Identity.IsAuthenticated) 
+                {
+                    <div class="navbar-brand">
+                        User: @(User.Identity?.Name ?? "Unauthenticated")
+                    </div>
+                }
             </div>
         </nav>
     </header>

@@ -7,9 +7,11 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using CoreTodo.Data;
 using CoreTodo.Data.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CoreTodo.Pages.ToDos
 {
+    [Authorize]
     public class CreateModel : PageModel
     {
         private readonly CoreTodo.Data.ToDoDbContext _context;

@@ -8,9 +8,11 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using CoreTodo.Data;
 using CoreTodo.Data.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CoreTodo.Pages.ToDos
 {
+    [Authorize]
     public class EditModel : PageModel
     {
         private readonly CoreTodo.Data.ToDoDbContext _context;

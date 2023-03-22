@@ -7,9 +7,11 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using CoreTodo.Data;
 using CoreTodo.Data.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace CoreTodo.Pages.ToDos
 {
+    [Authorize]
     public class DeleteModel : PageModel
     {
         private readonly CoreTodo.Data.ToDoDbContext _context;
