@@ -12,8 +12,8 @@ public class IndexModel : PageModel
         _logger = logger;
     }
 
-    public void OnGet()
+    public IActionResult OnGet()
     {
-        this.RedirectToPage("/ToDo");
+        return RedirectToPage("/ToDos/Index");
     }
 }

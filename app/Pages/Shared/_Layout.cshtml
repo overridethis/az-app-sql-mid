@@ -27,10 +27,16 @@
                         </li>
                     </ul>
                 </div>
+                <div class="navbar-brand">
+                    User: @(User.Identity?.Name ?? "Unauthenticated")
+                </div>
             </div>
         </nav>
     </header>
     <div class="container">
+        <h1>
+            @ViewData["Title"]
+        </h1>
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
