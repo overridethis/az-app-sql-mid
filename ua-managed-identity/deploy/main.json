@@ -1,0 +1,175 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.18.4.5664",
+      "templateHash": "2656443173859632940"
+    }
+  },
+  "parameters": {
+    "suffix": {
+      "type": "string",
+      "metadata": {
+        "description": "The suffix to be used for naming of resources in this deployment."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "The location to deploy all resources in this deployment."
+      }
+    }
+  },
+  "variables": {
+    "tags": {
+      "env": "[parameters('suffix')]"
+    },
+    "uniqueKey": "[uniqueString(subscription().subscriptionId, parameters('suffix'))]",
+    "linuxFxVersion": "dotnetcore|7.0"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2023-01-31",
+      "name": "[format('user-{0}', variables('uniqueKey'))]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('tags')]"
+    },
+    {
+      "type": "Microsoft.Web/serverfarms",
+      "apiVersion": "2022-03-01",
+      "name": "[format('plan-{0}', variables('uniqueKey'))]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('tags')]",
+      "sku": {
+        "name": "P2v2"
+      },
+      "kind": "linux",
+      "properties": {
+        "reserved": true
+      }
+    },
+    {
+      "type": "Microsoft.Insights/components",
+      "apiVersion": "2020-02-02",
+      "name": "[format('ai-{0}', variables('uniqueKey'))]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('tags')]",
+      "kind": "web",
+      "properties": {
+        "Application_Type": "web",
+        "RetentionInDays": 90,
+        "publicNetworkAccessForIngestion": "Enabled",
+        "publicNetworkAccessForQuery": "Enabled"
+      }
+    },
+    {
+      "type": "Microsoft.Web/sites",
+      "apiVersion": "2022-03-01",
+      "name": "[format('app-{0}', variables('uniqueKey'))]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('tags')]",
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": {
+          "[format('{0}', resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('user-{0}', variables('uniqueKey'))))]": {}
+        }
+      },
+      "properties": {
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', variables('uniqueKey')))]",
+        "siteConfig": {
+          "linuxFxVersion": "[variables('linuxFxVersion')]",
+          "logsDirectorySizeLimit": 100,
+          "detailedErrorLoggingEnabled": true,
+          "appSettings": [
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId('Microsoft.Insights/components', format('ai-{0}', variables('uniqueKey'))), '2020-02-02').InstrumentationKey]"
+            },
+            {
+              "name": "Db__RunMigrations",
+              "value": "true"
+            }
+          ],
+          "connectionStrings": [
+            {
+              "name": "DefaultConnection",
+              "type": "SQLAzure",
+              "connectionString": "[format('Server=tcp:{0}{1},1433;Database={2};Authentication=Active Directory Managed Identity;Encrypt=True;User Id={3};', format('sqlsrv-{0}', variables('uniqueKey')), environment().suffixes.sqlServerHostname, format('sqldb-{0}', variables('uniqueKey')), reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('user-{0}', variables('uniqueKey'))), '2023-01-31').clientId)]"
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers/databases', format('sqlsrv-{0}', variables('uniqueKey')), format('sqldb-{0}', variables('uniqueKey')))]",
+        "[resourceId('Microsoft.Sql/servers', format('sqlsrv-{0}', variables('uniqueKey')))]",
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('user-{0}', variables('uniqueKey')))]",
+        "[resourceId('Microsoft.Insights/components', format('ai-{0}', variables('uniqueKey')))]",
+        "[resourceId('Microsoft.Web/serverfarms', format('plan-{0}', variables('uniqueKey')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Web/sites/sourcecontrols",
+      "apiVersion": "2022-03-01",
+      "name": "[format('{0}/{1}', format('app-{0}', variables('uniqueKey')), 'web')]",
+      "properties": {
+        "repoUrl": "https://github.com/overridethis/az-app-sql-mid.git",
+        "branch": "main",
+        "isManualIntegration": true
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Web/sites', format('app-{0}', variables('uniqueKey')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2022-05-01-preview",
+      "name": "[format('sqlsrv-{0}', variables('uniqueKey'))]",
+      "location": "[parameters('location')]",
+      "tags": "[variables('tags')]",
+      "properties": {
+        "administrators": {
+          "azureADOnlyAuthentication": true,
+          "login": "[format('user-{0}', variables('uniqueKey'))]",
+          "administratorType": "ActiveDirectory",
+          "principalType": "Application",
+          "sid": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('user-{0}', variables('uniqueKey'))), '2023-01-31').clientId]",
+          "tenantId": "[tenant().tenantId]"
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', format('user-{0}', variables('uniqueKey')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Sql/servers/firewallRules",
+      "apiVersion": "2022-05-01-preview",
+      "name": "[format('{0}/{1}', format('sqlsrv-{0}', variables('uniqueKey')), 'AllowAllWindowsAzureIps')]",
+      "properties": {
+        "endIpAddress": "0.0.0.0",
+        "startIpAddress": "0.0.0.0"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', format('sqlsrv-{0}', variables('uniqueKey')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Sql/servers/databases",
+      "apiVersion": "2022-05-01-preview",
+      "name": "[format('{0}/{1}', format('sqlsrv-{0}', variables('uniqueKey')), format('sqldb-{0}', variables('uniqueKey')))]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "collation": "SQL_Latin1_General_CP1_CI_AS",
+        "catalogCollation": "SQL_Latin1_General_CP1_CI_AS",
+        "maxSizeBytes": 10737418240,
+        "licenseType": "LicenseIncluded"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', format('sqlsrv-{0}', variables('uniqueKey')))]"
+      ]
+    }
+  ]
+}
