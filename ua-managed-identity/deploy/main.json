@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.18.4.5664",
-      "templateHash": "2656443173859632940"
+      "templateHash": "15314393139995535818"
     }
   },
   "parameters": {
@@ -13,6 +13,12 @@
       "type": "string",
       "metadata": {
         "description": "The suffix to be used for naming of resources in this deployment."
+      }
+    },
+    "mockarooApiKey": {
+      "type": "string",
+      "metadata": {
+        "description": "The Mockaroo API key used to generate test data."
       }
     },
     "location": {
@@ -90,8 +96,8 @@
               "value": "[reference(resourceId('Microsoft.Insights/components', format('ai-{0}', variables('uniqueKey'))), '2020-02-02').InstrumentationKey]"
             },
             {
-              "name": "Db__RunMigrations",
-              "value": "true"
+              "name": "Mockaroo__ApiKey",
+              "value": "[parameters('mockarooApiKey')]"
             }
           ],
           "connectionStrings": [

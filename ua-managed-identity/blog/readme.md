@@ -8,7 +8,7 @@ In this post we will enforce one of those best practices "**Minimize the use of 
 This is about as simple as an cloud architecture can get. We are deploying within the context of an Resource Group an App Service that will be running a simple web application that uses a User-Assigned Managed Identity to authenticate to an Azure SQL Database.  
 
 ## Deploying your Resources
-All resources will be defined in a bicep file that is going to be used to deploy a full working solution out to Azure. The following are a set of parameters that are going to be used across all resources.  Specifically we are creating a set tags based on a suffix provided to the script and using the location of the resource group that the resources are going to be created in as the default location for all resources.
+All resources will be defined in a bicep file that is going to be used to deploy a full working solution out to Azure. The following are a set of parameters that are going to be used across all resources.  Specifically we are creating a set tags based on a `suffix` provided to the script and using the location of the resource group that the resources are going to be created in as the default location for all resources.  We are also adding a [Mockaroo](https://mockaroo.com) API Key value that is used by the demo code associated to this post to generate sample data.
 
 ```bicep
 // parameters.
@@ -170,20 +170,22 @@ resource sourceControl 'Microsoft.Web/sites/sourcecontrols@2022-03-01' = {
 }
 ```
 
-## Running/Deploy to Azure
-Finally, if you have been following the previous steps you can deploy the application by following these steps:
+Finally, you can deploy the application to Azure by following these steps:
 1. Register for a [Mockaroo API](https://www.mockaroo.com) license key.
-   > Mockaroo API will be used generate data for the demo application once it is deployed to the cloud.
+   > Mockaroo API will be used to generate data for the demo application for the source control deployment is pointing to once it is deployed and running.
 2. Install the [Azure Command-Line Interface (CLI)](https://learn.microsoft.com/en-us/cli/azure/). 
 3. Ensure you are authenticated to the Azure Command-Line Interface. 
-4. From the context of the `ua-managed-identity/deploy` folder execute the following command.
+4. From the folder containing your `main.bicep` file execute the following `az` cli command.
    ```sh
-   az deployment sub create --template-file main.bicep \
+   az group create --name {NAME_OF_RESOURCE_GROUP}
+   az deployment group create --template-file main.bicep \
+       --resource-group {NAME_OF_RESOURCE_GROUP}
        --location eastus2 \
        --parameters suffix={YOUR_CUSTOM_SUFFIX} mockarooApiKey={YOUR_MOCKAROO_API_KEY}
    ```   
 
 ## Reference
+1. All source code showcased in this article.[https://github.com/overridethis/az-app-sql-mid](https://github.com/overridethis/az-app-sql-mid)
 1. [Playbook for addressing common security requirements with Azure SQL Database and Azure SQL Managed Instance](https://learn.microsoft.com/en-us/azure/azure-sql/database/security-best-practice?view=azuresql)
-2. [An overview of Azure SQL Database and SQL Managed Instance security capabilities](https://learn.microsoft.com/en-us/azure/azure-sql/database/security-overview?view=azuresql)
-3. [Microsoft Operational Security Practices - Practice #4 - Protect Secrets](https://www.microsoft.com/en-us/securityengineering/osa/practices#practice4)
+1. [An overview of Azure SQL Database and SQL Managed Instance security capabilities](https://learn.microsoft.com/en-us/azure/azure-sql/database/security-overview?view=azuresql)
+1. [Microsoft Operational Security Practices - Practice #4 - Protect Secrets](https://www.microsoft.com/en-us/securityengineering/osa/practices#practice4)
