@@ -11,6 +11,5 @@ az group create --name $RESOURCE_GROUP_NAME \
 
 # deploy to azure.
 az deployment group create --template-file main.bicep \
-    --resource-group {NAME_OF_RESOURCE_GROUP}
     --location eastus2 \
     --parameters suffix=$DEPLOYMENT_SUFFIX mockarooApiKey=$MOCKAROO_API_KEY
