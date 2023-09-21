@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Options;
 using TeamMembers.Data.Models;
 using TeamMembers.Services;
 
@@ -25,9 +26,16 @@ public static class DbInitializerExtensions
     {
         using var scope = app.ApplicationServices.CreateScope();
         var services = scope.ServiceProvider;
-        var context = services.GetRequiredService<AppDbContext>();
-        var fakes = services.GetRequiredService<IFakeDataService>();
-        DbInitializer.Initialize(context, fakes);
+        var config = services.GetRequiredService<IOptions<DbConfiguration>>();
+
+        if (config.Value.RunInitializer) {
+    
+            var context = services.GetRequiredService<AppDbContext>();
+            var fakes = services.GetRequiredService<IFakeDataService>();
+
+            DbInitializer.Initialize(context, fakes);
+        }
+
         return app;
     }   
 }

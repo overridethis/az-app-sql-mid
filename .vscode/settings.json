@@ -1,3 +1,8 @@
 {
-    "dotnet.defaultSolution": "app/TeamMembers.sln"
+    "dotnet.defaultSolution": "app/TeamMembers.sln",
+    "cSpell.words": [
+        "appsettings",
+        "Hsts",
+        "Mockaroo"
+    ]
 }

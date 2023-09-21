@@ -16,6 +16,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 });
 builder.Services.AddScoped<DbInitializer>();
 builder.Services.Configure<MockarooOptions>(builder.Configuration.GetSection("Mockaroo"));
+builder.Services.Configure<DbConfiguration>(builder.Configuration.GetSection("DbConfiguration"));
 builder.Services.AddScoped<IFakeDataService, FakeDataService>();
 
 var app = builder.Build();

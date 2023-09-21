@@ -4,6 +4,9 @@
 # Mac specific nonsense
 .DS_Store
 
+# JetBrains
+.idea
+
 # Local Settings.
 appsettings.**.json
 
